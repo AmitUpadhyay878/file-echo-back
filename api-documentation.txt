@@ -1,0 +1,306 @@
+FILE ECHO API DOCUMENTATION
+==========================
+
+Base URL: http://localhost:5000/api
+
+1. TEMPORARY FILE SHARING (NO LOGIN REQUIRED)
+==========================================
+
+1.1 Upload Temporary File
+------------------------
+Endpoint: /temp/upload
+Method: POST
+Access: Public
+Headers:
+{
+    "device-token": "string" (optional - will be generated if not provided)
+    "Content-Type": "multipart/form-data"
+}
+Payload:
+Form Data:
+{
+    "file": "file_object"  // File to upload (max 100MB)
+}
+Response Success (201):
+{
+    "message": "File uploaded successfully",
+    "deviceToken": "string", // Save this for future uploads
+    "fileInfo": {
+        "shareUrl": "http://localhost:5000/api/temp/download/{shareToken}",
+        "filename": "string",
+        "size": "number",
+        "expiresAt": "date"
+    }
+}
+Response Error (400):
+{
+    "message": "File size exceeds 100MB limit"
+}
+OR
+{
+    "message": "Upload limit reached for this device"
+}
+
+1.2 Download Temporary File
+-------------------------
+Endpoint: /temp/download/{shareToken}
+Method: GET
+Access: Public
+Response Success: File download stream
+Response Error (404):
+{
+    "message": "File not found or has expired"
+}
+
+1.3 Get Temporary File Info
+-------------------------
+Endpoint: /temp/info/{shareToken}
+Method: GET
+Access: Public
+Response Success (200):
+{
+    "filename": "string",
+    "size": "number",
+    "downloadCount": "number",
+    "expiresAt": "date",
+    "uploadedAt": "date"
+}
+Response Error (404):
+{
+    "message": "File not found or has expired"
+}
+
+1.4 Get Device Upload Count
+-------------------------
+Endpoint: /temp/device-count/{deviceToken}
+Method: GET
+Access: Public
+Response Success (200):
+{
+    "uploadCount": "number",
+    "lastUploadAt": "date"
+}
+
+2. AUTHENTICATION ENDPOINTS (FOR REGISTERED USERS)
+==============================================
+
+2.1 Register User
+----------------
+Endpoint: /auth/register
+Method: POST
+Access: Public
+Payload:
+{
+    "name": "string",
+    "email": "string",
+    "password": "string"
+}
+Response Success (201):
+{
+    "_id": "user_id",
+    "name": "string",
+    "email": "string",
+    "token": "jwt_token"
+}
+Response Error (400):
+{
+    "message": "User already exists"
+}
+
+2.2 Login User
+-------------
+Endpoint: /auth/login
+Method: POST
+Access: Public
+Payload:
+{
+    "email": "string",
+    "password": "string"
+}
+Response Success (200):
+{
+    "_id": "user_id",
+    "name": "string",
+    "email": "string",
+    "token": "jwt_token"
+}
+Response Error (401):
+{
+    "message": "Invalid email or password"
+}
+
+2.3 Get Current User
+-------------------
+Endpoint: /auth/me
+Method: GET
+Access: Private (requires token)
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Response Success (200):
+{
+    "_id": "user_id",
+    "name": "string",
+    "email": "string"
+}
+Response Error (401):
+{
+    "message": "Not authorized, no token"
+}
+
+3. FILE MANAGEMENT ENDPOINTS (FOR REGISTERED USERS)
+==============================================
+
+3.1 Upload File
+--------------
+Endpoint: /files/upload
+Method: POST
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token",
+    "Content-Type": "multipart/form-data"
+}
+Payload:
+Form Data:
+{
+    "file": "file_object"
+}
+Response Success (201):
+{
+    "message": "File uploaded successfully",
+    "file": {
+        "_id": "file_id",
+        "filename": "string",
+        "mimetype": "string",
+        "size": "number",
+        "createdAt": "date"
+    }
+}
+Response Error (400):
+{
+    "message": "No file uploaded"
+}
+
+3.2 Get User's Files
+-------------------
+Endpoint: /files
+Method: GET
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Response Success (200):
+[
+    {
+        "_id": "file_id",
+        "filename": "string",
+        "mimetype": "string",
+        "size": "number",
+        "createdAt": "date"
+    }
+]
+
+3.3 Get File Details
+------------------
+Endpoint: /files/:id
+Method: GET
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Response Success (200):
+{
+    "_id": "file_id",
+    "filename": "string",
+    "mimetype": "string",
+    "size": "number",
+    "createdAt": "date"
+}
+
+3.4 Download File
+---------------
+Endpoint: /files/:id/download
+Method: GET
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Response Success: File download stream
+
+3.5 Delete File
+-------------
+Endpoint: /files/:id
+Method: DELETE
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Response Success (200):
+{
+    "message": "File deleted successfully",
+    "_id": "deleted_file_id"
+}
+
+TEMPORARY FILE SHARING RULES:
+===========================
+1. Maximum file size: 100MB
+2. Files automatically expire after 7 days
+3. Maximum 5 files per device
+4. No authentication required
+5. Share URL format: http://localhost:5000/api/temp/download/{shareToken}
+6. Device token should be saved locally for tracking upload limits
+
+REGISTERED USER RULES:
+====================
+1. Authentication required via JWT token
+2. No file count limits
+3. Files don't expire
+4. More features available (delete, list all files, etc.)
+
+ERROR CODES:
+===========
+200: Success
+201: Created
+400: Bad Request
+401: Unauthorized
+403: Forbidden
+404: Not Found
+500: Server Error
+
+Example curl commands:
+====================
+
+1. Upload Temporary File:
+curl -X POST http://localhost:5000/api/temp/upload \
+-H "device-token: optional-device-token" \
+-F "file=@/path/to/your/file.pdf"
+
+2. Download Shared File:
+curl -O http://localhost:5000/api/temp/download/{shareToken}
+
+3. Check Device Upload Count:
+curl http://localhost:5000/api/temp/device-count/{deviceToken}
+
+4. Register User:
+curl -X POST http://localhost:5000/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"name":"John Doe","email":"john@example.com","password":"password123"}'
+
+5. Upload File (Authenticated):
+curl -X POST http://localhost:5000/api/files/upload \
+-H "Authorization: Bearer your_token_here" \
+-F "file=@/path/to/your/file.pdf"
+
+NOTES:
+======
+1. All dates are in ISO format
+2. File sizes are in bytes
+3. Device tokens should be stored locally in the browser
+4. Share tokens are single-use and tied to specific files
+5. Keep your JWT tokens secure and never share them
