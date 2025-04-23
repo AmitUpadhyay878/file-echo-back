@@ -10,6 +10,7 @@ const blogRoutes = require('./routes/blogRoutes'); // Import blog routes
 const { protect } = require('./middleware/authMiddleware'); // Import protect middleware
 const jobRoutes = require('./routes/jobRoutes');
 const multer = require('multer');
+const userRoutes = require('./routes/userRoutes');
 // const { put } = require('@vercel/blob');
 
 // Load environment variables
@@ -50,6 +51,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/jobs', jobRoutes); // Mount job routes before file routes
 app.use('/api/blogs', blogRoutes); // Mount blog routes
+app.use('/api/users', userRoutes);
 
 // File routes - split into authenticated and public routes
 const publicFileRouter = express.Router();
@@ -66,7 +68,9 @@ const {
   uploadTempFile,
   getTempFile,
   downloadTempFile,
-  getSharedFile
+  getSharedFile,
+  shareFileWithUsers,
+  getFilesSharedWithMe
 } = require('./controllers/fileController');
 
 // Public file routes (no auth required)
@@ -78,10 +82,12 @@ publicFileRouter.get('/shared/:id', getSharedFile);
 // Protected file routes (auth required)
 protectedFileRouter.post('/upload', upload.single('file'), uploadFile);
 protectedFileRouter.get('/', getUserFiles);
+protectedFileRouter.get('/shared-with-me', getFilesSharedWithMe);
 protectedFileRouter.get('/:id', getFileDetails);
 protectedFileRouter.get('/:id/download', downloadFile);
 protectedFileRouter.delete('/:id', deleteFile);
 protectedFileRouter.post('/:id/share', generateShareLink);
+protectedFileRouter.post('/:id/share-with-users', shareFileWithUsers);
 
 // Apply routes
 app.use('/api/files', publicFileRouter); // Public routes first

@@ -138,9 +138,11 @@ const downloadFile = async (req, res, next) => {
             return res.status(404).json({ message: 'File not found' });
         }
 
-        // Check ownership (or sharing rules if implemented)
-        if (file.owner.toString() !== req.user._id.toString()) {
-            // Add logic here later for shared files if needed
+        // Check ownership or if file is shared with the user
+        const isOwner = file.owner.toString() === req.user._id.toString();
+        const isSharedWithUser = file.sharedWith && file.sharedWith.some(id => id.toString() === req.user._id.toString());
+        
+        if (!isOwner && !isSharedWithUser) {
             return res.status(403).json({ message: 'User not authorized to download this file' });
         }
 
@@ -483,6 +485,74 @@ const downloadTempFile = async (req, res, next) => {
     }
 };
 
+// @desc    Share file with specific users
+// @route   POST /api/files/:id/share-with-users
+// @access  Private
+const shareFileWithUsers = async (req, res, next) => {
+    try {
+        const { userIds } = req.body;
+        
+        if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+            return res.status(400).json({ message: 'User IDs are required' });
+        }
+
+        const file = await File.findById(req.params.id);
+
+        if (!file) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        // Ensure the user owns the file
+        if (file.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'User not authorized to share this file' });
+        }
+
+        // Add users to the sharedWith array if they're not already there
+        const uniqueUserIds = [...new Set([...file.sharedWith.map(id => id.toString()), ...userIds])];
+        file.sharedWith = uniqueUserIds;
+        
+        await file.save();
+
+        res.json({
+            message: 'File shared with users successfully',
+            sharedWith: file.sharedWith
+        });
+    } catch (error) {
+        console.error("Share File With Users Error:", error);
+        if (error.kind === 'ObjectId') {
+            return res.status(404).json({ message: 'File or user not found (invalid ID format)' });
+        }
+        next(error);
+    }
+};
+
+// @desc    Get files shared with the current user
+// @route   GET /api/files/shared-with-me
+// @access  Private
+const getFilesSharedWithMe = async (req, res, next) => {
+    try {
+        const files = await File.find({ 
+            sharedWith: req.user._id 
+        }).populate('owner', 'name email');
+        
+        res.json(files.map(file => ({
+            _id: file._id,
+            filename: file.filename,
+            mimetype: file.mimetype,
+            size: file.size,
+            createdAt: file.createdAt,
+            updatedAt: file.updatedAt,
+            url: `${req.protocol}://${req.get('host')}/api/files/${file._id}/download`,
+            downloadCount: file.downloadCount || 0,
+            owner: file.owner,
+            isShared: true
+        })));
+    } catch (error) {
+        console.error("Get Shared Files Error:", error);
+        next(error);
+    }
+};
+
 module.exports = {
     uploadFile,
     getUserFiles,
@@ -495,4 +565,6 @@ module.exports = {
     uploadTempFile,
     getTempFile,
     downloadTempFile,
+    shareFileWithUsers,
+    getFilesSharedWithMe
 };

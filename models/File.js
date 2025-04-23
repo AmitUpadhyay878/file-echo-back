@@ -50,6 +50,11 @@ const fileSchema = new mongoose.Schema({
   isTemporary: { // Whether this is a temporary file
     type: Boolean,
     default: false,
+  },
+  sharedWith: { // Users the file is shared with
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'User',
+    default: []
   }
 }, {
   timestamps: true, // Adds createdAt and updatedAt timestamps
