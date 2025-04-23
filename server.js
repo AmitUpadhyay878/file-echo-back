@@ -23,7 +23,7 @@ const app = express();
 
 // Middleware
 // Allow requests from your React frontend (adjust origin if needed)
-app.use(cors({ origin: ['http://localhost:8080'], credentials: true })); // Enable credentials for cookies/auth headers
+app.use(cors({ origin: ['http://localhost:8080','https://tempszero.vercel.app/'], credentials: true })); // Enable credentials for cookies/auth headers
 // app.use(cors());
 app.use(express.json()); // To parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies (needed for forms potentially)
