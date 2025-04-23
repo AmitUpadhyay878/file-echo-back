@@ -21,6 +21,7 @@ connectDB();
 // Create Express app
 const app = express();
 
+
 // Middleware
 // Allow requests from your React frontend (adjust origin if needed)
 app.use(cors({ origin: ['https://tempszero.vercel.app','http://localhost:8080'], credentials: true })); // Enable credentials for cookies/auth headers
