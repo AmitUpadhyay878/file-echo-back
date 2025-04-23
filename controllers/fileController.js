@@ -45,7 +45,12 @@ const uploadFile = async (req, res, next) => {
                 mimetype: newFile.mimetype,
                 size: newFile.size,
                 createdAt: newFile.createdAt,
-                // Add other relevant fields if needed for the frontend
+                updatedAt: newFile.updatedAt,
+                url: `${req.protocol}://${req.get('host')}/api/files/download/${newFile._id}`,
+                downloadCount: newFile.downloadCount || 0,
+                shareId: newFile.shareId,
+                isPublic: newFile.isPublic || false,
+                owner: newFile.owner
             }
         });
     } catch (error) {
@@ -69,13 +74,18 @@ const uploadFile = async (req, res, next) => {
 const getUserFiles = async (req, res, next) => {
     try {
         const files = await File.find({ owner: req.user._id }).sort({ createdAt: -1 }); // Sort by newest first
-        res.json(files.map(file => ({ // Only send necessary data
+        res.json(files.map(file => ({
             _id: file._id,
             filename: file.filename,
             mimetype: file.mimetype,
             size: file.size,
             createdAt: file.createdAt,
-            // Add share info if implemented
+            updatedAt: file.updatedAt,
+            url: `${req.protocol}://${req.get('host')}/api/files/download/${file._id}`,
+            downloadCount: file.downloadCount || 0,
+            shareId: file.shareId,
+            isPublic: file.isPublic || false,
+            owner: file.owner
         })));
     } catch (error) {
         console.error("Get User Files Error:", error);
@@ -284,13 +294,16 @@ const getSharedFile = async (req, res, next) => {
             return res.status(403).json({ message: 'This file is no longer shared' });
         }
 
+        // Return file details
         res.json({
             _id: file._id,
             filename: file.filename,
             mimetype: file.mimetype,
             size: file.size,
             createdAt: file.createdAt,
-            downloadCount: file.downloadCount
+            downloadCount: file.downloadCount,
+            isPublic: file.isPublic,
+            shareId: file.shareId
         });
     } catch (error) {
         console.error("Get Shared File Error:", error);
@@ -324,7 +337,7 @@ const downloadSharedFile = async (req, res, next) => {
         }
 
         // Increment download count
-        file.downloadCount += 1;
+        file.downloadCount = (file.downloadCount || 0) + 1;
         await file.save();
 
         // Set headers for download
@@ -332,14 +345,17 @@ const downloadSharedFile = async (req, res, next) => {
         res.setHeader('Content-Type', file.mimetype);
         res.setHeader('Content-Length', file.size);
 
-        res.download(filePath, file.filename, (err) => {
-            if (err) {
-                console.error("File Download Error:", err);
-                if (!res.headersSent) {
-                    return res.status(500).json({ message: 'Could not download the file.' });
-                }
+        // Stream the file
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+
+        fileStream.on('error', (err) => {
+            console.error("File Stream Error:", err);
+            if (!res.headersSent) {
+                res.status(500).json({ message: 'Error streaming file' });
             }
         });
+
     } catch (error) {
         console.error("Download Shared File Error:", error);
         next(error);

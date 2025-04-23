@@ -6,8 +6,11 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const contactRoutes = require('./routes/contactRoutes'); // Import contact routes
+const blogRoutes = require('./routes/blogRoutes'); // Import blog routes
 const { protect } = require('./middleware/authMiddleware'); // Import protect middleware
+const jobRoutes = require('./routes/jobRoutes');
 const multer = require('multer');
+// const { put } = require('@vercel/blob');
 
 // Load environment variables
 dotenv.config();
@@ -20,8 +23,8 @@ const app = express();
 
 // Middleware
 // Allow requests from your React frontend (adjust origin if needed)
-//app.use(cors({ origin: 'http://localhost:8080', credentials: true })); // Enable credentials for cookies/auth headers
-app.use(cors());
+app.use(cors({ origin: ['http://localhost:8080'], credentials: true })); // Enable credentials for cookies/auth headers
+// app.use(cors());
 app.use(express.json()); // To parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // To parse URL-encoded bodies (needed for forms potentially)
 
@@ -44,6 +47,8 @@ const upload = multer({
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/jobs', jobRoutes); // Mount job routes before file routes
+app.use('/api/blogs', blogRoutes); // Mount blog routes
 
 // File routes - split into authenticated and public routes
 const publicFileRouter = express.Router();
@@ -88,6 +93,13 @@ app.get('/api', (req, res) => {
 
 // Serve uploaded files (optional, depends on how you store/serve files)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// app.post('/upload', upload.single('file'), async (req, res) => {
+//     const { originalname, buffer } = req.file;
+//     const blob = await put(originalname, buffer, {
+//       access: 'public',
+//     });
+//     res.json({ url: blob.url });
+//   });
 
 // Not Found Handler (should be after all routes)
 app.use((req, res, next) => {
