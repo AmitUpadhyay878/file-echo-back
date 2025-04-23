@@ -247,6 +247,264 @@ Response Success (200):
     "_id": "deleted_file_id"
 }
 
+3.6 Generate Share Link
+---------------------
+Endpoint: /files/:id/share
+Method: POST
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Response Success (200):
+{
+    "shareId": "string",
+    "shareLink": "string"
+}
+
+3.7 Get Shared File
+-----------------
+Endpoint: /files/shared/:shareId
+Method: GET
+Access: Public
+Response Success (200):
+{
+    "message": "string",
+    "file": {
+        "_id": "string",
+        "filename": "string",
+        "mimetype": "string",
+        "size": "number",
+        "createdAt": "string",
+        "updatedAt": "string",
+        "url": "string",
+        "downloadCount": "number",
+        "shareId": "string",
+        "isPublic": "boolean",
+        "owner": "string"
+    }
+}
+
+3.8 Download Shared File
+----------------------
+Endpoint: /files/shared/:shareId/download
+Method: GET
+Access: Public
+Response Success: File download stream
+
+4. BLOG ENDPOINTS
+==============================================
+
+4.1 Get All Published Blogs
+------------------------
+Endpoint: /blogs
+Method: GET
+Access: Public
+Query Parameters:
+{
+    "page": "number" (default: 1),
+    "limit": "number" (default: 10),
+    "sort": "string" (default: '-createdAt'),
+    "tag": "string" (optional),
+    "category": "string" (optional),
+    "search": "string" (optional)
+}
+Response Success (200):
+{
+    "blogs": [
+        {
+            "_id": "string",
+            "title": "string",
+            "slug": "string",
+            "content": "string",
+            "excerpt": "string",
+            "coverImage": "string",
+            "author": {
+                "_id": "string",
+                "username": "string",
+                "email": "string"
+            },
+            "tags": ["string"],
+            "categories": ["string"],
+            "views": "number",
+            "readTime": "number",
+            "isPublished": "boolean",
+            "createdAt": "string",
+            "updatedAt": "string"
+        }
+    ],
+    "totalPages": "number",
+    "currentPage": "number",
+    "totalItems": "number"
+}
+
+4.2 Get Single Blog by Slug
+--------------------------
+Endpoint: /blogs/:slug
+Method: GET
+Access: Public
+Response Success (200):
+{
+    "_id": "string",
+    "title": "string",
+    "slug": "string",
+    "content": "string",
+    "excerpt": "string",
+    "coverImage": "string",
+    "author": {
+        "_id": "string",
+        "username": "string",
+        "email": "string"
+    },
+    "tags": ["string"],
+    "categories": ["string"],
+    "views": "number",
+    "readTime": "number",
+    "isPublished": "boolean",
+    "createdAt": "string",
+    "updatedAt": "string"
+}
+
+4.3 Create New Blog
+-----------------
+Endpoint: /blogs
+Method: POST
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Payload:
+{
+    "title": "string",
+    "content": "string",
+    "excerpt": "string" (optional),
+    "coverImage": "string",
+    "tags": ["string"],
+    "categories": ["string"],
+    "isPublished": "boolean" (default: true)
+}
+Response Success (201):
+{
+    "_id": "string",
+    "title": "string",
+    "slug": "string",
+    "content": "string",
+    "excerpt": "string",
+    "coverImage": "string",
+    "author": "string",
+    "tags": ["string"],
+    "categories": ["string"],
+    "views": "number",
+    "readTime": "number",
+    "isPublished": "boolean",
+    "createdAt": "string",
+    "updatedAt": "string"
+}
+
+4.4 Update Blog
+-------------
+Endpoint: /blogs/:id
+Method: PUT
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Payload:
+{
+    "title": "string" (optional),
+    "content": "string" (optional),
+    "excerpt": "string" (optional),
+    "coverImage": "string" (optional),
+    "tags": ["string"] (optional),
+    "categories": ["string"] (optional),
+    "isPublished": "boolean" (optional)
+}
+Response Success (200):
+{
+    "_id": "string",
+    "title": "string",
+    "slug": "string",
+    "content": "string",
+    "excerpt": "string",
+    "coverImage": "string",
+    "author": "string",
+    "tags": ["string"],
+    "categories": ["string"],
+    "views": "number",
+    "readTime": "number",
+    "isPublished": "boolean",
+    "createdAt": "string",
+    "updatedAt": "string"
+}
+
+4.5 Delete Blog
+-------------
+Endpoint: /blogs/:id
+Method: DELETE
+Access: Private
+Headers: 
+{
+    "Authorization": "Bearer jwt_token"
+}
+Response Success (200):
+{
+    "message": "Blog removed"
+}
+
+4.6 Get Popular Tags
+------------------
+Endpoint: /blogs/tags
+Method: GET
+Access: Public
+Response Success (200):
+[
+    {
+        "_id": "string", // tag name
+        "count": "number" // number of blogs with this tag
+    }
+]
+
+4.7 Get Blogs by Author
+---------------------
+Endpoint: /blogs/author/:userId
+Method: GET
+Access: Public
+Query Parameters:
+{
+    "page": "number" (default: 1),
+    "limit": "number" (default: 10)
+}
+Response Success (200):
+{
+    "blogs": [
+        {
+            "_id": "string",
+            "title": "string",
+            "slug": "string",
+            "content": "string",
+            "excerpt": "string",
+            "coverImage": "string",
+            "author": {
+                "_id": "string",
+                "username": "string",
+                "email": "string"
+            },
+            "tags": ["string"],
+            "categories": ["string"],
+            "views": "number",
+            "readTime": "number",
+            "isPublished": "boolean",
+            "createdAt": "string",
+            "updatedAt": "string"
+        }
+    ],
+    "totalPages": "number",
+    "currentPage": "number",
+    "totalItems": "number"
+}
+
 TEMPORARY FILE SHARING RULES:
 ===========================
 1. Maximum file size: 100MB
@@ -262,6 +520,14 @@ REGISTERED USER RULES:
 2. No file count limits
 3. Files don't expire
 4. More features available (delete, list all files, etc.)
+5. Ability to share files with other users
+
+BLOG RULES:
+===========
+1. Authentication required for creating, updating, and deleting blogs
+2. Public access for reading blogs
+3. Blogs support markdown content
+4. Images in blogs need absolute URLs for proper display
 
 ERROR CODES:
 ===========
@@ -297,6 +563,19 @@ curl -X POST http://localhost:5000/api/files/upload \
 -H "Authorization: Bearer your_token_here" \
 -F "file=@/path/to/your/file.pdf"
 
+6. Generate Share Link:
+curl -X POST http://localhost:5000/api/files/{id}/share \
+-H "Authorization: Bearer your_token_here"
+
+7. Get All Blogs:
+curl http://localhost:5000/api/blogs
+
+8. Create Blog:
+curl -X POST http://localhost:5000/api/blogs \
+-H "Authorization: Bearer your_token_here" \
+-H "Content-Type: application/json" \
+-d '{"title":"My Blog Title","content":"Blog content here","coverImage":"/images/cover.jpg","tags":["tag1","tag2"],"categories":["category1"]}'
+
 NOTES:
 ======
 1. All dates are in ISO format
@@ -304,3 +583,4 @@ NOTES:
 3. Device tokens should be stored locally in the browser
 4. Share tokens are single-use and tied to specific files
 5. Keep your JWT tokens secure and never share them
+6. Blog images must use absolute URLs for proper display
